@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#160e18">
+<title>For My Sona ❤️</title>
+<style>
+:root{color-scheme:dark;--bg:#160e18;--panel:#241725;--pink:#ff9fca;--muted:#c7aebe}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0,#4b2441 0,#211323 42%,#100b13 100%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#fff;padding:24px 16px 40px}
+main{max-width:520px;margin:auto}.top{text-align:center;padding:20px 8px 24px}.heart{font-size:28px;color:var(--pink)}h1{font-family:Georgia,serif;font-size:clamp(34px,9vw,48px);font-weight:500;margin:8px 0;color:#ffd3e7}.sub{color:var(--muted);font-size:14px}
+.card{background:linear-gradient(145deg,rgba(58,35,58,.96),rgba(30,19,34,.98));border:1px solid #62405a;border-radius:26px;padding:22px;box-shadow:0 18px 50px #0007}
+.art{height:210px;border-radius:20px;background:radial-gradient(circle at 50% 40%,#a54d79,#542443 48%,#25152a 80%);display:grid;place-items:center;margin-bottom:20px;overflow:hidden}
+.art span{font-size:76px;filter:drop-shadow(0 8px 20px #240b1c)}
+.track{text-align:center}.track strong{display:block;font-size:20px}.track small{display:block;color:var(--muted);margin-top:5px}
+.progress{width:100%;accent-color:var(--pink);margin:20px 0 4px}.times{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}
+.controls{display:flex;align-items:center;justify-content:center;gap:25px;margin:18px 0 12px}.controls button,.tools button{border:0;color:white;background:transparent;font-size:25px;cursor:pointer}.controls .play{width:64px;height:64px;border-radius:50%;background:var(--pink);color:#291321;font-size:26px;box-shadow:0 8px 24px #ff9fca55}
+.tools{display:flex;justify-content:center;gap:24px}.tools button{font-size:13px;color:var(--muted)}.tools button.active{color:var(--pink)}
+.section{display:flex;justify-content:space-between;align-items:center;margin:24px 4px 12px}.section h2{font-size:16px;margin:0}.section span{font-size:12px;color:var(--muted)}
+.list{display:grid;gap:8px}.song{width:100%;text-align:left;border:1px solid #4c354b;background:#241925;color:white;border-radius:14px;padding:13px;display:flex;gap:12px;align-items:center;cursor:pointer}.song.current{border-color:var(--pink);background:#3a2036}.num{color:var(--pink);width:22px}.song b{font-size:14px;font-weight:600}.song small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.note{text-align:center;color:var(--muted);font-size:11px;line-height:1.6;margin:18px 8px 0}
+button:focus-visible,input:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div class="heart">♥</div>
+    <h1>For My Sona</h1>
+    <div class="sub">A little world made just for you ✨</div>
+  </header>
+  <section class="card" aria-label="Music player">
+    <div class="art"><span>🌹</span></div>
+    <div class="track"><strong id="title">Your playlist is waiting</strong><small id="artist">Add your songs to begin</small></div>
+    <audio id="audio" preload="metadata"></audio>
+    <input class="progress" id="progress" type="range" min="0" max="100" value="0" aria-label="Song progress">
+    <div class="times"><span id="elapsed">0:00</span><span id="duration">0:00</span></div>
+    <div class="controls">
+      <button id="prev" aria-label="Previous song">⏮</button>
+      <button class="play" id="play" aria-label="Play">▶</button>
+      <button id="next" aria-label="Next song">⏭</button>
+    </div>
+    <div class="tools">
+      <button id="shuffle" type="button">⤨ Shuffle</button>
+      <button id="repeat" type="button">↻ Repeat: Off</button>
+    </div>
+  </section>
+  <div class="section"><h2>Our playlist</h2><span id="count">0 songs</span></div>
+  <section class="list" id="playlist"><div class="song"><span class="num">♡</span><span><b>No songs added yet</b><small>We’ll add your Drive songs next</small></span></div></section>
+  <p class="note">Made with love for Sona ❤️<br>Tap Play to start. Your phone/browser may need to stay open for uninterrupted playback.</p>
+</main>
+<script>
+/*
+  ADD SONGS HERE after receiving each individual Google Drive song link.
+  For every track, use:
+  { title: "Song name", artist: "Artist", url: "https://drive.google.com/uc?export=download&id=FILE_ID" }
+  The Drive file itself must be shared as "Anyone with the link — Viewer".
+  A folder link alone cannot provide the browser with a public playlist automatically.
+*/
+const tracks = [];
+const audio=document.getElementById('audio'), titleEl=document.getElementById('title'),
+artistEl=document.getElementById('artist'), playlistEl=document.getElementById('playlist'),
+playBtn=document.getElementById('play'), progress=document.getElementById('progress');
+let current=0,shuffle=false,repeat=false,order=[];
+const fmt=s=>{if(!Number.isFinite(s))return'0:00';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')};
+function makeOrder(){order=tracks.map((_,i)=>i);if(shuffle)for(let i=order.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}}
+function render(){
+ document.getElementById('count').textContent=tracks.length+' song'+(tracks.length===1?'':'s');
+ playlistEl.innerHTML='';
+ if(!tracks.length){playlistEl.innerHTML='<div class="song"><span class="num">♡</span><span><b>No songs added yet</b><small>Send the individual song links to add them</small></span></div>';return}
+ tracks.forEach((t,i)=>{let b=document.createElement('button');b.className='song'+(i===current?' current':'');b.innerHTML='<span class="num">'+String(i+1).padStart(2,'0')+'</span><span><b></b><small></small></span>';b.querySelector('b').textContent=t.title;b.querySelector('small').textContent=t.artist||'For My Sona';b.onclick=()=>load(i,true);playlistEl.appendChild(b)})
+}
+function load(i,autoplay){if(!tracks.length)return;current=(i+tracks.length)%tracks.length;audio.src=tracks[current].url;titleEl.textContent=tracks[current].title;artistEl.textContent=tracks[current].artist||'For My Sona ❤️';render();if(autoplay)audio.play().then(()=>playBtn.textContent='Ⅱ').catch(()=>playBtn.textContent='▶')}
+playBtn.onclick=()=>{if(!tracks.length)return;if(!audio.src)load(0,false);if(audio.paused)audio.play().then(()=>playBtn.textContent='Ⅱ').catch(()=>{});else{audio.pause();playBtn.textContent='▶'}};
+function next(){if(!tracks.length)return;if(repeat){audio.currentTime=0;audio.play();return}let pos=order.indexOf(current);load(order[(pos+1)%order.length],true)}
+document.getElementById('next').onclick=next;
+document.getElementById('prev').onclick=()=>{if(audio.currentTime>3){audio.currentTime=0;return}let pos=order.indexOf(current);load(order[(pos-1+order.length)%order.length],true)};
+document.getElementById('shuffle').onclick=e=>{shuffle=!shuffle;e.currentTarget.classList.toggle('active',shuffle);makeOrder()};
+document.getElementById('repeat').onclick=e=>{repeat=!repeat;e.currentTarget.textContent='↻ Repeat: '+(repeat?'On':'Off');e.currentTarget.classList.toggle('active',repeat)};
+audio.addEventListener('ended',next);
+audio.addEventListener('timeupdate',()=>{if(audio.duration){progress.value=audio.currentTime/audio.duration*100;document.getElementById('elapsed').textContent=fmt(audio.currentTime);document.getElementById('duration').textContent=fmt(audio.duration)}});
+progress.oninput=()=>{if(audio.duration)audio.currentTime=progress.value/100*audio.duration};
+audio.addEventListener('play',()=>playBtn.textContent='Ⅱ');audio.addEventListener('pause',()=>playBtn.textContent='▶');
+makeOrder();render();
+</script>
+</body>
+</html>
